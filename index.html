@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkiye Futbol Menajeri 2026</title>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #151d30;
+            --accent: #00e676;
+            --accent-dark: #00b248;
+            --blue: #2979ff;
+            --danger: #ff5252;
+            --text: #f1f5f9;
+            --text-muted: #8e9bb0;
+            --border: #232f48;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: var(--bg-main); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sol Menü */
+        nav { width: 250px; background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 10px; gap: 8px; }
+        .logo { font-size: 1.1rem; font-weight: 900; color: var(--accent); text-align: center; margin-bottom: 20px; letter-spacing: 1px; }
+        .nav-btn { background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 12px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
+        .nav-btn:hover, .nav-btn.active { background: rgba(0, 230, 118, 0.12); color: var(--accent); border-color: var(--accent); }
+
+        /* Ana Alan */
+        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
+        .header-stats span { margin-right: 18px; font-size: 0.9rem; }
+        .badge { background: var(--accent); color: #000; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+        
+        .tab-content { padding: 25px; display: none; }
+        .tab-content.active { display: block; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        h2 { margin-bottom: 15px; color: var(--accent); font-size: 1.2rem; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        th { color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; }
+        .btn { background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: var(--accent-dark); }
+        .btn-blue { background: var(--blue); color: #fff; }
+
+        /* Canlı Maç & Saha */
+        .match-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .pitch-box { background: #166534; border: 2px solid #22c55e; border-radius: 8px; height: 380px; position: relative; }
+        canvas { width: 100%; height: 100%; }
+        .logs-box { background: #0c1322; border: 1px solid var(--border); border-radius: 8px; height: 380px; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; }
+        .log-item { padding: 6px 10px; border-radius: 4px; background: rgba(255,255,255,0.03); }
+        .log-item.goal { background: rgba(0, 230, 118, 0.2); border-left: 3px solid var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">TÜRKİYE MENAJERİ</div>
+        <button class="nav-btn active" onclick="switchTab('tab-dash', this)">🏠 Kulüp & Ayarlar</button>
+        <button class="nav-btn" onclick="switchTab('tab-squad', this)">👥 Kadro & İlk 11</button>
+        <button class="nav-btn" onclick="switchTab('tab-tactics', this)">📋 Taktik Tahtası</button>
+        <button class="nav-btn" onclick="switchTab('tab-transfers', this)">💼 Transfer Pazarı</button>
+        <button class="nav-btn" onclick="switchTab('tab-league', this)">🏆 Lig & Puan Durumu</button>
+        <button class="nav-btn" onclick="switchTab('tab-match', this)">⚽ Maç Günü (2D)</button>
+    </nav>
+
+    <main>
+        <header>
+            <div class="header-stats">
+                <span>Kulüp: <b id="head-club">-</b></span>
+                <span>Lig: <b id="head-league">-</b></span>
+                <span>Sezon: <b id="head-season">1</b></span>
+                <span>Hafta: <b id="head-week">1</b> / 6</span>
+            </div>
+            <div>
+                Bütçe: <span class="badge" id="head-budget">€0</span>
+            </div>
+        </header>
+
+        <!-- KULÜP YÖNETİMİ -->
+        <div id="tab-dash" class="tab-content active">
+            <div class="card">
+                <h2>Kulüp Özelleştirme & Eşit Güç Ligi</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <input type="text" id="input-team-name" placeholder="Yeni Takım Adı" style="padding: 8px 12px; background: #0b0f19; border: 1px solid var(--border); color:#fff; border-radius: 6px;">
+                    <button class="btn" onclick="updateTeamName()">Takım Adını Değiştir</button>
+                    <button class="btn btn-blue" onclick="enableEqualLeague()">⚔️ Eşit Güç Arkadaş Ligi Modu</button>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Eşit Güç Modu: Ligdeki tüm takımların bütçesini (€25M) ve takım gücünü (75 OVR) eşitler. Sadece taktik ve scouting kazanır.</p>
+            </div>
+        </div>
+
+        <!-- KADRO -->
+        <div id="tab-squad" class="tab-content">
+            <div class="card">
+                <h2>Mevcut Kadro</h2>
+                <table>
+                    <thead>
+                        <tr><th>Mevki</th><th>Oyuncu</th><th>Güç (OVR)</th><th>Moral</th><th>Kondisyon</th></tr>
+                    </thead>
+                    <tbody id="squad-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAKTİK -->
+        <div id="tab-tactics" class="tab-content">
+            <div class="card">
+                <h2>Taktiksel Anlayış</h2>
+                <div style="display: flex; gap: 20px; margin-top: 15px;">
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem;">Diziliş:</label><br>
+                        <select id="tac-formation" style="background:#0b0f19; color:#fff; border:1px solid var(--border); padding:8px; border-radius:6px; margin-top:5px;">
+                            <option>4-3-3 Ofansif</option>
+                            <option>4-2-3-1 Dengeli</option>
+                            <option>3-5-2 Pres</option>
+                            <option>5-3-2 Kontra</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem;">Oyun Stili:</label><br>
+                        <select id="tac-style" style="background:#0b0f19; color:#fff; border:1px solid var(--border); padding:8px; border-radius:6px; margin-top:5px;">
+                            <option>Kısa Pas & Topa Sahip Olma</option>
+                            <option>Direkt Hücum</option>
+                            <option>Yüksek Pres</option>
+                            <option>Otobüsü Çek (Savunma)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANSFER -->
+        <div id="tab-transfers" class="tab-content">
+            <div class="card">
+                <h2>Transfer Listesi</h2>
+                <table>
+                    <thead>
+                        <tr><th>Mevki</th><th>Oyuncu</th><th>Güç</th><th>Bonservis Bedeli</th><th>İşlem</th></tr>
+                    </thead>
+                    <tbody id="transfer-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- LİG PUAN DURUMU -->
+        <div id="tab-league" class="tab-content">
+            <div class="card">
+                <h2 id="league-name-heading">Süper Lig Puan Tablosu</h2>
+                <table>
+                    <thead>
+                        <tr><th>Sıra</th><th>Takım</th><th>O</th><th>G</th><th>B</th><th>M</th><th>Av</th><th>P</th></tr>
+                    </thead>
+                    <tbody id="league-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MAÇ GÜNÜ & 2D SAHA -->
+        <div id="tab-match" class="tab-content">
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="match-fixture-title">Haftanın Maçı</h2>
+                <button class="btn" id="btn-play-match" onclick="start2DMatch()">Maçı Başlat (2D Canlı Simülasyon)</button>
+            </div>
+            <div class="match-grid">
+                <div class="pitch-box">
+                    <canvas id="matchPitch"></canvas>
+                </div>
+                <div class="logs-box" id="matchLogs">
+                    <div class="log-item">Hakem kadroları kontrol ediyor...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // OYUN HAFIZASI
+        const DB = {
+            season: 1,
+            week: 1,
+            totalWeeks: 6,
+            currentLeague: "Süper Lig",
+            userTeam: "İstanbul Yıldızları",
+            budget: 25000000,
+            leagues: {
+                "Süper Lig": [
+                    { name: "İstanbul Yıldızları", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:76, isUser: true },
+                    { name: "Boğaziçi FK", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:76, isUser: false },
+                    { name: "Anadolu Gücü", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:75, isUser: false },
+                    { name: "Ege Spor", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:74, isUser: false }
+                ],
+                "1. Lig": [
+                    { name: "Karadeniz SK", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:70, isUser: false },
+                    { name: "Akdeniz FK", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:69, isUser: false },
+                    { name: "Başkent FK", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:68, isUser: false },
+                    { name: "Doğu Birlik", p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0, ovr:67, isUser: false }
+                ]
+            },
+            squad: [
+                { pos: "GK", name: "M. Günok", ovr: 76, moral: 100, fit: 100 },
+                { pos: "RB", name: "Z. Çelik", ovr: 75, moral: 100, fit: 100 },
+                { pos: "CB", name: "M. Demiral", ovr: 79, moral: 100, fit: 100 },
+                { pos: "CB", name: "S. Saatçı", ovr: 75, moral: 100, fit: 100 },
+                { pos: "LB", name: "E. Elmalı", ovr: 75, moral: 100, fit: 100 },
+                { pos: "CM", name: "B. Özdemir", ovr: 75, moral: 100, fit: 100 },
+                { pos: "CM", name: "S. Uçan", ovr: 76, moral: 100, fit: 100 },
+                { pos: "CAM", name: "Y. Yazıcı", ovr: 77, moral: 100, fit: 100 },
+                { pos: "RW", name: "Y. Akgün", ovr: 76, moral: 100, fit: 100 },
+                { pos: "LW", name: "K. Aktürkoğlu", ovr: 78, moral: 100, fit: 100 },
+                { pos: "ST", name: "B. Yıldırım", ovr: 76, moral: 100, fit: 100 }
+            ],
+            market: [
+                { pos: "CAM", name: "A. Güler", ovr: 82, price: 19000000 },
+                { pos: "CM", name: "O. Kökçü", ovr: 80, price: 15000000 },
+                { pos: "RW", name: "C. Ünder", ovr: 78, price: 9500000 },
+                { pos: "GK", name: "A. Bayındır", ovr: 77, price: 6000000 },
+                { pos: "ST", name: "E. Ünal", ovr: 79, price: 13000000 }
+            ]
+        };
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+            renderAll();
+        }
+
+        function renderAll() {
+            document.getElementById('head-club').innerText = DB.userTeam;
+            document.getElementById('head-league').innerText = DB.currentLeague;
+            document.getElementById('head-season').innerText = DB.season;
+            document.getElementById('head-week').innerText = DB.week;
+            document.getElementById('head-budget').innerText = "€" + DB.budget.toLocaleString();
+
+            // Kadro Çiz
+            const sqBody = document.getElementById('squad-tbody');
+            sqBody.innerHTML = '';
+            DB.squad.forEach(p => {
+                sqBody.innerHTML += `<tr><td><b>${p.pos}</b></td><td>${p.name}</td><td><span class="badge">${p.ovr}</span></td><td>%${p.moral}</td><td>%${p.fit}</td></tr>`;
+            });
+
+            // Transfer Çiz
+            const trBody = document.getElementById('transfer-tbody');
+            trBody.innerHTML = '';
+            DB.market.forEach((p, i) => {
+                trBody.innerHTML += `<tr><td><b>${p.pos}</b></td><td>${p.name}</td><td><span class="badge">${p.ovr}</span></td><td>€${p.price.toLocaleString()}</td><td><button class="btn" onclick="buyTransfer(${i})">Al</button></td></tr>`;
+            });
+
+            // Puan Durumu Çiz
+            const lgBody = document.getElementById('league-tbody');
+            lgBody.innerHTML = '';
+            const teams = [...DB.leagues[DB.currentLeague]].sort((a,b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga));
+            teams.forEach((t, i) => {
+                lgBody.innerHTML += `<tr style="${t.isUser ? 'background: rgba(0,230,118,0.1); font-weight:bold;' : ''}"><td>${i+1}</td><td>${t.name}</td><td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf - t.ga}</td><td>${t.pts}</td></tr>`;
+            });
+
+            // Fikstür Başlığı
+            const curTeams = DB.leagues[DB.currentLeague].filter(t => !t.isUser);
+            const opp = curTeams[(DB.week - 1) % curTeams.length];
+            document.getElementById('match-fixture-title').innerText = `${DB.week}. Hafta: ${DB.userTeam} vs ${opp.name}`;
+        }
+
+        function updateTeamName() {
+            const name = document.getElementById('input-team-name').value.trim();
+            if (name) {
+                DB.userTeam = name;
+                const me = DB.leagues[DB.currentLeague].find(t => t.isUser);
+                if (me) me.name = name;
+                renderAll();
+                alert("Takım adı güncellendi: " + name);
+            }
+        }
+
+        function enableEqualLeague() {
+            DB.leagues[DB.currentLeague].forEach(t => { t.ovr = 75; t.pts = 0; t.p = 0; t.w = 0; t.d = 0; t.l = 0; t.gf = 0; t.ga = 0; });
+            DB.budget = 25000000;
+            DB.week = 1;
+            renderAll();
+            alert("Eşit Güç Modu Aktif! Tüm güçler ve bütçeler eşitlendi.");
+        }
+
+        function buyTransfer(idx) {
+            const p = DB.market[idx];
+            if (DB.budget >= p.price) {
+                DB.budget -= p.price;
+                DB.squad.push({ pos: p.pos, name: p.name, ovr: p.ovr, moral: 100, fit: 100 });
+                DB.market.splice(idx, 1);
+                renderAll();
+                alert(`${p.name} transfer edildi!`);
+            } else {
+                alert("Yetersiz bütçe!");
+            }
+        }
+
+        // 2D CANLI MAÇ MOTORU
+        function start2DMatch() {
+            const btn = document.getElementById('btn-play-match');
+            btn.disabled = true;
+            const canvas = document.getElementById('matchPitch');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const logs = document.getElementById('matchLogs');
+            logs.innerHTML = '';
+
+            let min = 0, uScore = 0, oScore = 0;
+            const curTeams = DB.leagues[DB.currentLeague].filter(t => !t.isUser);
+            const opponent = curTeams[(DB.week - 1) % curTeams.length];
+
+            function draw(bx, by) {
+                ctx.fillStyle = "#166534";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = "rgba(255,255,255,0.4)";
+                ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2, 10);
+                ctx.lineTo(canvas.width / 2, canvas.height - 10);
+                ctx.stroke();
+                // Top
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.arc(bx, by, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const timer = setInterval(() => {
+                min += 10;
+                draw(Math.random() * (canvas.width - 40) + 20, Math.random() * (canvas.height - 40) + 20);
+
+                if (Math.random() > 0.55) {
+                    if (Math.random() > 0.45) {
+                        uScore++;
+                        const scorer = DB.squad[Math.floor(Math.random() * DB.squad.length)].name;
+                        const assister = DB.squad[Math.floor(Math.random() * DB.squad.length)].name;
+                        logs.innerHTML += `<div class="log-item goal">⚽ ${min}' GOOOL! ${DB.userTeam} | Gol: ${scorer} (Asist: ${assister})</div>`;
+                    } else {
+                        oScore++;
+                        logs.innerHTML += `<div class="log-item goal">⚽ ${min}' GOL! ${opponent.name} golü buldu.</div>`;
+                    }
+                } else {
+                    logs.innerHTML += `<div class="log-item">${min}' Tehlikeli atak, savunma araya girdi.</div>`;
+                }
+                logs.scrollTop = logs.scrollHeight;
+
+                if (min >= 90) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    logs.innerHTML += `<div class="log-item" style="font-weight:bold; background:#1e293b;">🏁 Maç Sonu: ${DB.userTeam} ${uScore} - ${oScore} ${opponent.name}</div>`;
+                    finishWeek(uScore, oScore, opponent);
+                }
+            }, 500);
+        }
+
+        function finishWeek(uG, oG, opp) {
+            const user = DB.leagues[DB.currentLeague].find(t => t.isUser);
+            user.p++; opp.p++; user.gf += uG; user.ga += oG; opp.gf += oG; opp.ga += uG;
+
+            if (uG > oG) { user.w++; user.pts += 3; opp.l++; DB.budget += 2000000; }
+            else if (uG === oG) { user.d++; user.pts += 1; opp.d++; opp.pts += 1; DB.budget += 750000; }
+            else { user.l++; opp.w++; opp.pts += 3; }
+
+            DB.week++;
+            if (DB.week > DB.totalWeeks) {
+                alert(`Sezon ${DB.season} sona erdi! Puanlar sıfırlanıyor, kadro ve bütçen korunarak yeni sezona geçiliyor...`);
+                DB.season++;
+                DB.week = 1;
+                for (let l in DB.leagues) {
+                    DB.leagues[l].forEach(t => { t.p=0; t.w=0; t.d=0; t.l=0; t.gf=0; t.ga=0; t.pts=0; });
+                }
+            }
+            renderAll();
+        }
+
+        window.onload = () => {
+            renderAll();
+            const canvas = document.getElementById('matchPitch');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        };
+    </script>
+</body>
+</html>
